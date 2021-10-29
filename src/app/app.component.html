@@ -1,0 +1,93 @@
+<div *ngIf="context$ | async as context">
+  <ng-container *ngIf="context.convertedFiles; let convertedFiles; else notConvertedYet">
+    <mat-toolbar>  
+      <mat-toolbar-row>
+        <button mat-mini-fab color="primary" (click)="returnFromResults()">
+          <mat-icon>home</mat-icon>
+        </button>
+        &nbsp;
+        Converted typescript files
+      </mat-toolbar-row>
+    </mat-toolbar>
+
+    <mat-tab-group>
+      <ng-container *ngTemplateOutlet="fileGroupTab; context: {title: 'Services', files: convertedFiles.services}">
+      </ng-container>
+      <ng-container *ngTemplateOutlet="fileGroupTab; context: {title: 'Types', files: convertedFiles.types}">
+      </ng-container>
+
+      <ng-template #fileGroupTab let-title="title" let-files="files">
+        <mat-tab [label]="title">
+          <mat-expansion-panel *ngFor="let file of files">
+            <mat-expansion-panel-header>
+              {{file.filename}}.ts
+            </mat-expansion-panel-header>
+            <td-highlight lang="typescript">
+            <![CDATA[{{file.content}}]]>
+          </td-highlight>
+          </mat-expansion-panel>
+        </mat-tab>
+      </ng-template>
+
+    </mat-tab-group>
+  </ng-container>
+  <ng-template #notConvertedYet>
+    <mat-grid-list rows="2" cols="5" rowHeight="50vh">
+      <mat-grid-tile
+        [colspan]="2"
+        [rowspan]="1"
+      >
+        <mat-card>
+          <mat-card-title>
+            {{ context?.description }}
+          </mat-card-title>
+          <mat-card-content>
+            <div *ngIf="!context.schema" class="error">
+              There are errors in your code. Please, check it.
+            </div>
+          </mat-card-content>
+          <mat-card-actions *ngIf="(status$ | async) !== Status.Pending; else workInProgress">
+            <button (click)="doConvert()" [disabled]="!context.schema" mat-raised-button color="accent">
+              Convert
+            </button>
+            <button mat-button (click)="resetCurrentExample();">
+              Reset
+            </button>
+          </mat-card-actions>
+          <ng-template #workInProgress>
+            <mat-card-actions>
+              <mat-progress-bar color="accent" mode="indeterminate"></mat-progress-bar>
+            </mat-card-actions>
+          </ng-template>
+        </mat-card>
+      </mat-grid-tile>
+      <mat-grid-tile
+          [colspan]="3"
+          [rowspan]="2"
+          [style.background]="'#eeeeee'">
+        
+        <ngx-codemirror 
+          [formControl]="oasCode"
+          [options]="{
+            lineNumbers: true,
+            theme: 'material',
+            mode: 'javascript'
+          }"
+        ></ngx-codemirror>
+      </mat-grid-tile>
+      <mat-grid-tile
+          [colspan]="2"
+          [rowspan]="1"
+      >
+        <mat-form-field>
+          <mat-label>Select example</mat-label>
+          <mat-select [formControl]="currentExampleId">
+            <mat-option *ngFor="let example of examples" [value]="example.id">
+              {{example.title}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </mat-grid-tile>
+    </mat-grid-list>
+  </ng-template>
+</div>
